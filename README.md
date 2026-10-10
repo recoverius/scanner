@@ -48,7 +48,17 @@ npm start            # serves the folder on http://localhost:8080
 npm test             # unit tests for the imaging engine, PDF writer and ZIP writer
 ```
 
-The camera needs a secure context, so use `https://` or `http://localhost`. To try it on a phone, deploy the folder to any static host (GitHub Pages, Netlify, Cloudflare Pages) or tunnel your local server over HTTPS.
+The camera needs a secure context, so use `https://` or `http://localhost`.
+
+## Installing on your phone
+
+Every push to `main` deploys the app to GitHub Pages (`.github/workflows/pages.yml`) at `https://<owner>.github.io/<repo>/`. To switch it on once, open **Settings → Pages** and set **Source** to **GitHub Actions**. GitHub Pages on a private repository needs a paid plan; otherwise make the repository public.
+
+Open the site on your phone, then:
+- **Android (Chrome):** menu ⋮ → **Install app** (or **Add to Home screen**).
+- **iPhone (Safari):** Share → **Add to Home Screen**.
+
+It then opens full screen like a native app and works offline. When a new version is deployed, the app shows "A new version of Paperwise is ready" with a Reload button.
 
 ## Project layout
 

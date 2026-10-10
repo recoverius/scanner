@@ -773,6 +773,12 @@ function wire() {
     if (choice === 'delete') deleteCurrentPage();
   });
 
+  // A long press should never select text or open the browser's menu, except in text fields.
+  const editable = (t) => t instanceof Element && !!t.closest('input, textarea, select, [contenteditable]');
+  document.addEventListener('contextmenu', (e) => { if (!editable(e.target)) e.preventDefault(); });
+  document.addEventListener('selectstart', (e) => { if (!editable(e.target)) e.preventDefault(); });
+  document.addEventListener('dragstart', (e) => { if (e.target instanceof HTMLImageElement) e.preventDefault(); });
+
   // Keyboard: Escape leaves selection or goes back.
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || hasOpenSheet()) return;
@@ -864,7 +870,11 @@ async function boot() {
   });
   route();
   if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') {
+    const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController) toast('A new version of Paperwise is ready', { action: 'Reload', onAction: () => location.reload() });
+    });
   }
 }
 
