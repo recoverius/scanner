@@ -221,7 +221,8 @@ export async function deletePages(pageIds) {
   }
   emit('pages');
   return async function undo() {
-    for (const r of removed.sort((a, b) => a.index - b.index)) {
+    // Each index was taken after the earlier removals, so restore in reverse order.
+    for (const r of [...removed].reverse()) {
       let doc = docs.get(r.page.docId);
       if (!doc) {
         doc = { id: r.page.docId, name: defaultDocName(), createdAt: Date.now(), updatedAt: Date.now(), pageIds: [] };

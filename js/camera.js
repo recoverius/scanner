@@ -333,6 +333,7 @@ function clamp01(v) { return Math.min(1, Math.max(0, v)); }
 
 function updateCount() {
   els.count.textContent = String(captured.length);
+  els.count.hidden = !captured.length;
   els.thumb.disabled = !captured.length;
   els.done.disabled = false;
   els.done.textContent = captured.length ? `Done (${captured.length})` : 'Cancel';

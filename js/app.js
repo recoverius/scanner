@@ -173,10 +173,13 @@ function renderLibrary() {
   updateLibSelBar();
 }
 
+// Selection is entered without rebuilding the grid, so the card under a long-press keeps its
+// handler and swallows the click that follows the release instead of toggling a fresh card off.
 function enterLibSelection() {
   libSelecting = true;
   libSel.clear();
-  renderLibrary();
+  for (const c of $$('#doc-grid .selected')) c.classList.remove('selected');
+  updateLibSelBar();
 }
 function exitLibSelection() {
   libSelecting = false;
@@ -345,7 +348,8 @@ function startDrag(card, pid, e) {
 function enterDocSelection() {
   docSelecting = true;
   docSel.clear();
-  renderDoc();
+  for (const c of $$('#page-grid .selected')) c.classList.remove('selected');
+  updateDocSelBar();
 }
 function exitDocSelection() {
   docSelecting = false;
@@ -384,7 +388,7 @@ async function pickDocument(title, excludeId) {
         const url = thumbUrl(store.pages.get(d.pageIds[0]));
         list.append(el('button', { onclick: () => close(d.id) },
           url ? el('img', { src: url, alt: '' }) : el('span', { class: 'ph' }),
-          el('span', { style: 'display:flex;flex-direction:column;min-width:0' }, el('strong', { text: d.name }), el('small', { style: 'color:var(--fg-muted)', text: `${d.pageIds.length} pages` }))));
+          el('span', { style: 'display:flex;flex-direction:column;min-width:0' }, el('strong', { text: d.name }), el('small', { style: 'color:var(--fg-muted)', text: `${d.pageIds.length} ${d.pageIds.length === 1 ? 'page' : 'pages'}` }))));
       }
       sheet.append(list);
     }, { onClose: (v) => resolve(v || null) });
@@ -441,17 +445,23 @@ async function importFiles(files, target) {
   }
   toast(`Added ${added.length} ${added.length === 1 ? 'page' : 'pages'} to “${doc.name}”`);
   db.requestPersistence();
-  if (store.settings.reviewCrop) {
-    if (parseHash().name !== 'doc' || currentDocId !== doc.id) go(`#/doc/${doc.id}`, { replace: parseHash().name === 'camera' });
-    startCropReviewPush(added, doc.id);
-  } else if (parseHash().name !== 'doc' || currentDocId !== doc.id) {
-    go(`#/doc/${doc.id}`, { replace: parseHash().name === 'camera' });
-  } else renderDoc();
+  showNewPages(doc.id, added);
 }
 
-function startCropReviewPush(pageIds, docId) {
-  cropQueue = { ids: pageIds, index: 0, docId };
-  go(`#/crop/${pageIds[0]}`);
+// Shows a document after new pages arrive, reviewing their crop first if that setting is on.
+// The camera screen gives way to the document: when the camera was opened from that document,
+// it is already the history entry below, so step back to it rather than stacking a second copy.
+function showNewPages(docId, pageIds) {
+  const { name, id } = parseHash();
+  const overDoc = name === 'camera' && id === docId;
+  const onDoc = name === 'doc' && currentDocId === docId;
+  if (store.settings.reviewCrop) {
+    if (!onDoc && !overDoc) go(`#/doc/${docId}`, { replace: name === 'camera' });
+    cropQueue = { ids: pageIds, index: 0, docId };
+    go(`#/crop/${pageIds[0]}`, { replace: overDoc });
+  } else if (overDoc) back(`#/doc/${docId}`);
+  else if (!onDoc) go(`#/doc/${docId}`, { replace: name === 'camera' });
+  else renderDoc();
 }
 
 let cameraDocId = null;
@@ -473,12 +483,7 @@ function startCamera(docId) {
         const p = store.pages.get(id);
         if (p && !p.corners) detectCorners(p).then((c) => c && store.updatePage(id, { corners: c })).catch(() => {});
       }
-      if (store.settings.reviewCrop) {
-        go(`#/doc/${cameraDocId}`, { replace: true });
-        startCropReviewPush(ids, cameraDocId);
-      } else {
-        go(`#/doc/${cameraDocId}`, { replace: true });
-      }
+      showNewPages(cameraDocId, ids);
     },
     onImport: (files) => importFiles(files, cameraDocId || 'new'),
     onNativeCapture: () => nativeCapture(cameraDocId),
@@ -738,8 +743,10 @@ function wire() {
       try {
         const r = await exportPage(page, { maxDim: 3400, quality: 0.9 });
         const doc = store.docs.get(page.docId);
-        downloadBlob(r.blob, `${safeFileName(doc.name)} - page ${doc.pageIds.indexOf(pid) + 1}.jpg`);
-        toast('Saved to your downloads');
+        b.done();
+        if (await downloadBlob(r.blob, `${safeFileName(doc.name)} - page ${doc.pageIds.indexOf(pid) + 1}.jpg`)) toast('Saved to your downloads');
+      } catch (e) {
+        toast(e.message, { error: true });
       } finally { b.done(); }
     }
     if (choice === 'move') {
@@ -850,7 +857,11 @@ async function boot() {
   const { name } = parseHash();
   // Never resume straight into the camera or crop after a reload.
   if (name === 'camera' || name === 'crop') history.replaceState({ depth: 0 }, '', '#/');
-  window.addEventListener('popstate', route);
+  window.addEventListener('popstate', () => {
+    // A crop entry left in history (e.g. reached with Forward after finishing a review) is stale: step over it.
+    if (parseHash().name === 'crop' && currentView !== 'crop') { history.back(); return; }
+    route();
+  });
   route();
   if ('serviceWorker' in navigator && window.isSecureContext && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});

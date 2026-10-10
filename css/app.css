@@ -240,6 +240,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; lett
 .bottom-bar.on-dark { background: var(--stage); border-top-color: rgba(255, 255, 255, .08); position: static; }
 .sel-count { font-weight: 600; padding-left: 4px; white-space: nowrap; }
 .sel-actions { margin-left: auto; display: flex; gap: 2px; }
+.sel-actions .tool { min-width: 54px; } /* four actions plus the count must fit a 360px screen */
 .tool {
   display: flex; flex-direction: column; align-items: center; gap: 3px;
   min-width: 64px; padding: 6px 8px; border: 0; border-radius: 12px;
@@ -274,7 +275,7 @@ h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; lett
 }
 .page-thumb {
   position: relative; width: 100%; aspect-ratio: 3 / 4; max-width: 100%;
-  display: grid; place-items: center;
+  display: grid; place-items: center; grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   border-radius: var(--r-sm); background: var(--surface-2);
 }
 .page-thumb img { max-width: 100%; max-height: 100%; border-radius: 4px; box-shadow: var(--shadow); background: #fff; display: block; }

@@ -132,14 +132,17 @@ function showResult(host, files, close) {
   }
   actions.append(el('button', {
     class: `btn${actions.children.length ? '' : ' primary'}`,
-    onclick: () => {
-      if (single) downloadBlob(files[0], files[0].name);
-      else {
-        const zip = createZipFromFiles(files);
-        zip.then((z) => downloadBlob(z, `${files[0].name.replace(/ - \d+\.\w+$/, '')}.zip`));
+    onclick: async () => {
+      try {
+        const saved = single
+          ? await downloadBlob(files[0], files[0].name)
+          : await downloadBlob(await createZipFromFiles(files), `${files[0].name.replace(/ - \d+\.\w+$/, '')}.zip`);
+        if (!saved) return;
+        toast('Saved to your downloads');
+        setTimeout(close, 400);
+      } catch (e) {
+        toast(e.message, { error: true });
       }
-      toast('Saved to your downloads');
-      setTimeout(close, 400);
     },
   }, icon('download'), single ? 'Save' : 'Save as ZIP'));
   host.append(actions);

@@ -208,13 +208,33 @@ export function busy(message = 'Working…') {
 }
 
 /* ---------- files ---------- */
-export function downloadBlob(blob, filename) {
+// When the app runs inside a Claude artifact, files go through the host's save prompt.
+let downloadsCap = null;
+function hostDownloads() {
+  if (!window.claude?.use) return Promise.resolve(null);
+  downloadsCap ??= window.claude.use('downloads').catch(() => null);
+  return downloadsCap;
+}
+
+// Resolves true when the file was handed to the browser, false when the viewer declined.
+export async function downloadBlob(blob, filename) {
+  const host = await hostDownloads();
+  if (host) {
+    try {
+      await host.save({ filename, data: blob });
+      return true;
+    } catch (e) {
+      if (e?.code === 'declined') return false;
+      throw new Error(e?.message || 'The file could not be saved.');
+    }
+  }
   const url = URL.createObjectURL(blob);
   const a = el('a', { href: url, download: filename });
   document.body.append(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 30000);
+  return true;
 }
 
 export async function shareFiles(files, title) {
