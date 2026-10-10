@@ -103,7 +103,7 @@ function drawQuad(g, src, q) {
       (bot0.x - top0.x) / src.height, (bot0.y - top0.y) / src.height,
       top0.x, top0.y,
     );
-    g.drawImage(src, sx, 0, sw + 0.6, src.height, 0, 0, sw + 0.6, src.height);
+    g.drawImage(src, sx, 0, Math.min(sw + 1.5, src.width - sx), src.height, 0, 0, Math.min(sw + 1.5, src.width - sx), src.height);
     g.restore();
   }
 }
@@ -135,7 +135,7 @@ export async function makeSamplePhoto() {
   g.shadowColor = 'rgba(0,0,0,.55)';
   g.shadowBlur = 40;
   g.shadowOffsetY = 18;
-  g.fillStyle = '#000';
+  g.fillStyle = '#efe9dc'; // paper colour underneath, so strip seams never show the desk
   g.beginPath();
   quad.forEach((p, i) => (i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)));
   g.closePath();

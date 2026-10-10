@@ -157,15 +157,18 @@ async function buildStrip(page) {
   });
   els.strip.querySelector('[aria-checked="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' });
   try {
-    const previews = await filterPreviews(page, FILTERS.map((f) => f.id), 150);
+    const previews = await filterPreviews(page, FILTERS.map((f) => f.id), 300);
     if (token !== renderToken) return;
     previews.forEach((img, i) => {
       const src = imageToCanvas(img);
       const c = chips[i].c;
-      c.width = 124; c.height = 124;
+      // Show the top of the page at a readable zoom so filter differences are visible.
+      const size = 124;
+      c.width = size; c.height = size;
       const ctx = c.getContext('2d');
-      const s = Math.max(124 / src.width, 124 / src.height);
-      ctx.drawImage(src, (124 - src.width * s) / 2, 0, src.width * s, src.height * s);
+      ctx.imageSmoothingQuality = 'high';
+      const crop = Math.min(src.width, src.height) * 0.62;
+      ctx.drawImage(src, src.width * 0.04, src.height * 0.04, crop, crop, 0, 0, size, size);
     });
   } catch (e) {
     console.warn(e);

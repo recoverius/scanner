@@ -180,7 +180,7 @@ export async function renderPageCanvas(page, maxDim, overrides) {
 }
 
 export async function filterPreviews(page, filters, size = 140) {
-  const img = await renderPage(page, 400, { filter: 'original', adjust: {} });
+  const img = await renderPage(page, Math.max(400, size * 2), { filter: 'original', adjust: {} });
   return run('filters', { img, filters, adjust: {}, size });
 }
 
