@@ -52,7 +52,7 @@ The camera needs a secure context, so use `https://` or `http://localhost`.
 
 ## Installing on your phone
 
-Every push to `main` deploys the app to GitHub Pages (`.github/workflows/pages.yml`) at `https://<owner>.github.io/<repo>/`. To switch it on once, open **Settings → Pages** and set **Source** to **GitHub Actions**. GitHub Pages on a private repository needs a paid plan; otherwise make the repository public.
+Every push to `main` runs the tests and publishes the app to the `gh-pages` branch (`.github/workflows/pages.yml`), which GitHub Pages serves at `https://<owner>.github.io/<repo>/`. If Pages is not on yet, open **Settings → Pages** and choose **Deploy from a branch**, branch **gh-pages**, folder **/ (root)**. GitHub Pages on a private repository needs a paid plan; otherwise make the repository public.
 
 Open the site on your phone, then:
 - **Android (Chrome):** menu ⋮ → **Install app** (or **Add to Home screen**).
